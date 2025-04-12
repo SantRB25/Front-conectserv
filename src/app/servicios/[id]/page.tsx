@@ -1,16 +1,24 @@
-import { api } from "@/lib/api"
+import { api, Service } from "@/lib/api"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export default async function ServicioPage({ params }: { params: { id: string } }) {
+interface ServicioPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function ServicioPage({ params }: ServicioPageProps) {
   // Obtener el servicio específico
-  let service = null
+  let service: Service | undefined = undefined
+  
+  // Usar `await` para resolver `params`
+  const { id } = await params;
+
   try {
     // Aquí deberíamos tener un endpoint para obtener un servicio por ID
     // Como no lo tenemos, vamos a obtener todos y filtrar
     const response = await api.services.list()
-    service = response.data.find((s) => s.id.toString() === params.id)
+    service = response.data.find((s) => s.id.toString() === id)
   } catch (error) {
     console.error("Error al cargar el servicio:", error)
   }
@@ -49,4 +57,3 @@ export default async function ServicioPage({ params }: { params: { id: string } 
     </div>
   )
 }
-
