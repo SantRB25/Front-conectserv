@@ -1,6 +1,4 @@
 "use client";
-
-import { Card, CardContent } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -11,7 +9,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { useRegisterStore } from "@/store/register-store";
@@ -19,6 +16,8 @@ import { useState, useEffect } from "react";
 import { CheckCircle, AlertCircle, Info, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
+import { signIn } from "@/auth"
 
 const phoneRegex = /^\+[1-9]\d{1,14}$/;
 
@@ -39,7 +38,8 @@ const formSchema = z.object({
 });
 
 export function StepThree() {
-  const { setStep, setFormData, formData } = useRegisterStore();
+  const router = useRouter();
+  const { setStep, setFormData, formData, reset } = useRegisterStore();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [showVerificationInput, setShowVerificationInput] = useState(false);
@@ -52,6 +52,7 @@ export function StepThree() {
   );
   const [isCheckingCode, setIsCheckingCode] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Para el reenvío de código
   const [canResend, setCanResend] = useState(false);
@@ -105,11 +106,63 @@ export function StepThree() {
       return;
     }
 
-    setFormData({
-      ...values,
-      isWhatsappVerified: true,
-    });
-    setStep(4);
+    setIsSubmitting(true);
+
+    try {
+      const allFormData = {
+        ...formData,
+        ...values,
+      };
+
+      // 1. Registrar al usuario en la API
+      const response = await api.professional.register(allFormData);
+
+      if (!response.success) {
+        throw new Error(response.message || "Error en el registro");
+      }
+
+      router.push("/register/success")
+/*
+      // 2. Determinar las credenciales para iniciar sesión según el método de registro
+      let credentials: Record<string, string> = {};
+
+      switch (allFormData.registrationType) {
+        case "google":
+          if (!allFormData.google_id) {
+            throw new Error(
+              "No se encontró el ID de Google para iniciar sesión"
+            );
+          }
+          credentials = {
+            type: "google_id",
+            id: allFormData.google_id,
+          };
+          break;
+      }
+
+      // 3. Iniciar sesión con NextAuth
+      const signInResult = await signIn("credentials", {
+        ...credentials,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        throw new Error(signInResult.error || "Error al iniciar sesión");
+      }
+
+      // 4. Redirigir al dashboard
+      router.push("/dashboard");
+
+      // Limpiamos el store después de un registro exitoso
+      reset();*/
+    } catch (error: any) {
+      console.error("Error al finalizar el registro:", error);
+      setVerificationError(
+        error.message || "Error al finalizar el registro. Inténtalo nuevamente."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const sendVerificationCode = async (isResend = false) => {
@@ -198,7 +251,9 @@ export function StepThree() {
         setIsVerified(true);
         setShowVerificationInput(false);
         form.setValue("isWhatsappVerified", true);
-        setVerificationSuccess("Número verificado correctamente.");
+        setVerificationSuccess(
+          "Número verificado correctamente. Ahora puedes finalizar tu registro."
+        );
       } else {
         setVerificationError(
           response.error || "Código incorrecto. Inténtalo nuevamente."
@@ -228,180 +283,192 @@ export function StepThree() {
 
   return (
     <Form {...form}>
-  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-    <FormField
-      control={form.control}
-      name="names"
-      render={({ field }) => (
-        <FormItem>
-          <FormControl>
-            <Input {...field} placeholder="Nombres" />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="lastNames"
-      render={({ field }) => (
-        <FormItem>
-          <FormControl>
-            <Input {...field} placeholder="Apellidos" />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="age"
-      render={({ field }) => (
-        <FormItem>
-          <FormControl>
-            <Input type="number" {...field} placeholder="Edad" />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="whatsapp"
-      render={({ field }) => (
-        <FormItem>
-          <div className="flex gap-3">
-            <FormControl>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="names"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input {...field} placeholder="Nombres" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="lastNames"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input {...field} placeholder="Apellidos" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="age"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input type="number" {...field} placeholder="Edad" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="whatsapp"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex gap-3">
+                <FormControl>
+                  <Input
+                    type="tel"
+                    {...field}
+                    disabled={isVerified}
+                    placeholder="Número de WhatsApp"
+                    className={`w-full ${
+                      isVerified ? "bg-green-50 border-green-200" : ""
+                    }`}
+                  />
+                </FormControl>
+                {!isVerified ? (
+                  <Button
+                    type="button"
+                    onClick={() => sendVerificationCode(false)}
+                    disabled={isVerifying}
+                    variant="outline"
+                  >
+                    {isVerifying ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
+                    ) : null}
+                    Verificar
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-green-50 text-green-600 border-green-200"
+                    disabled
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Verificado
+                  </Button>
+                )}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {verificationError && (
+          <Alert variant="destructive" className="py-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{verificationError}</AlertDescription>
+          </Alert>
+        )}
+
+        {verificationSuccess && (
+          <Alert
+            variant="default"
+            className="py-2 bg-green-50 text-green-700 border-green-200"
+          >
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>{verificationSuccess}</AlertDescription>
+          </Alert>
+        )}
+
+        {debugInfo && (
+          <Alert
+            variant="default"
+            className="py-2 bg-blue-50 text-blue-700 border-blue-200"
+          >
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <details>
+                <summary className="cursor-pointer font-medium">
+                  Información de depuración
+                </summary>
+                <pre className="mt-2 text-xs overflow-auto p-2 bg-blue-100 rounded">
+                  {debugInfo}
+                </pre>
+              </details>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showVerificationInput && !isVerified && (
+          <div className="space-y-4 p-4 border rounded-md bg-muted/30">
+            <p className="text-sm text-muted-foreground">
+              Ingresa el código de 6 dígitos que recibiste en tu WhatsApp:
+            </p>
+            <div className="flex gap-3">
               <Input
-                type="tel"
-                {...field}
-                disabled={isVerified}
-                placeholder="Número de WhatsApp"
-                className={`w-full ${isVerified ? "bg-green-50 border-green-200" : ""}`}
+                type="text"
+                maxLength={6}
+                placeholder="Código de 6 dígitos"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                className="text-center font-mono text-lg"
               />
-            </FormControl>
-            {!isVerified ? (
               <Button
                 type="button"
-                onClick={() => sendVerificationCode(false)}
-                disabled={isVerifying}
-                variant="outline"
+                onClick={verifyCode}
+                disabled={isCheckingCode}
               >
-                {isVerifying ? (
+                {isCheckingCode ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
                 ) : null}
-                Verificar
+                Validar
               </Button>
-            ) : (
+            </div>
+
+            <div className="flex items-center justify-between mt-2 text-sm">
+              <span className="text-muted-foreground">
+                ¿No recibiste el código?
+              </span>
               <Button
                 type="button"
-                variant="outline"
-                className="bg-green-50 text-green-600 border-green-200"
-                disabled
+                variant="ghost"
+                size="sm"
+                onClick={handleResendCode}
+                disabled={!canResend || isResending}
+                className="flex items-center"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Verificado
+                {isResending ? (
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
+                ) : (
+                  <RefreshCw className="h-3 w-3 mr-2" />
+                )}
+                {canResend
+                  ? "Reenviar código"
+                  : `Reenviar en ${resendCountdown}s`}
               </Button>
-            )}
+            </div>
           </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+        )}
 
-    {verificationError && (
-      <Alert variant="destructive" className="py-2">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{verificationError}</AlertDescription>
-      </Alert>
-    )}
-
-    {verificationSuccess && (
-      <Alert
-        variant="default"
-        className="py-2 bg-green-50 text-green-700 border-green-200"
-      >
-        <CheckCircle className="h-4 w-4" />
-        <AlertDescription>{verificationSuccess}</AlertDescription>
-      </Alert>
-    )}
-
-    {debugInfo && (
-      <Alert
-        variant="default"
-        className="py-2 bg-blue-50 text-blue-700 border-blue-200"
-      >
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <details>
-            <summary className="cursor-pointer font-medium">
-              Información de depuración
-            </summary>
-            <pre className="mt-2 text-xs overflow-auto p-2 bg-blue-100 rounded">
-              {debugInfo}
-            </pre>
-          </details>
-        </AlertDescription>
-      </Alert>
-    )}
-
-    {showVerificationInput && !isVerified && (
-      <div className="space-y-4 p-4 border rounded-md bg-muted/30">
-        <p className="text-sm text-muted-foreground">
-          Ingresa el código de 6 dígitos que recibiste en tu WhatsApp:
-        </p>
-        <div className="flex gap-3">
-          <Input
-            type="text"
-            maxLength={6}
-            placeholder="Código de 6 dígitos"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            className="text-center font-mono text-lg"
-          />
+        <div className="flex justify-between gap-4">
+          <Button type="button" variant="outline" onClick={() => setStep(2)}>
+            Atrás
+          </Button>
           <Button
-            type="button"
-            onClick={verifyCode}
-            disabled={isCheckingCode}
+            type="submit"
+            disabled={!isVerified || isSubmitting}
+            className={!isVerified ? "opacity-50 cursor-not-allowed" : ""}
           >
-            {isCheckingCode ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
+            {isSubmitting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
             ) : null}
-            Validar
+            Finalizar registro
           </Button>
         </div>
-
-        <div className="flex items-center justify-between mt-2 text-sm">
-          <span className="text-muted-foreground">
-            ¿No recibiste el código?
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleResendCode}
-            disabled={!canResend || isResending}
-            className="flex items-center"
-          >
-            {isResending ? (
-              <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
-            ) : (
-              <RefreshCw className="h-3 w-3 mr-2" />
-            )}
-            {canResend ? "Reenviar código" : `Reenviar en ${resendCountdown}s`}
-          </Button>
-        </div>
-      </div>
-    )}
-
-    <div className="flex justify-between gap-4">
-      <Button type="button" variant="outline" onClick={() => setStep(2)}>
-        Atrás
-      </Button>
-      <Button type="submit">Continuar</Button>
-    </div>
-  </form>
-</Form>
-
+      </form>
+    </Form>
   );
 }

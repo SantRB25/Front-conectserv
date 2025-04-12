@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState,useEffect } from "react"
+import { useRouter,useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -47,13 +47,17 @@ export function SolicitarForm() {
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
+
+  // Obtener el ID del servicio de los parámetros de consulta
+  const serviceId = searchParams.get("service")
 
   // Inicializar el formulario
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      servicio_id: "",
+      servicio_id: serviceId || "",
       descripcion: "",
       ubicacion_texto: "",
       latitud: 0,
@@ -63,6 +67,13 @@ export function SolicitarForm() {
     },
     mode: "onChange",
   })
+
+  // Actualizar el valor del servicio cuando cambia el parámetro de consulta
+  useEffect(() => {
+    if (serviceId) {
+      form.setValue("servicio_id", serviceId)
+    }
+  }, [serviceId, form])
 
   // Función para avanzar al siguiente paso
   const nextStep = async () => {

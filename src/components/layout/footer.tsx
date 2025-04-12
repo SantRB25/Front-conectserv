@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/container"
 
 export function Footer() {
   return (
-    <footer className="bg-dark text-white">
+    <footer className="bg-[#121212] text-white">
       <Container className="py-16">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
@@ -81,7 +81,11 @@ export function Footer() {
           </div>
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Soporte</h3>
-            <Button className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white">Soporte Whatsapp</Button>
+            <Button className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white" asChild>
+              <Link href="https://wa.me/595987289975" target="_blank" rel="noopener noreferrer">
+                Soporte Whatsapp
+              </Link>
+            </Button>
             <div className="text-sm text-gray-300">
               <p>¿Necesitas ayuda?</p>
               <p>Contáctanos: support@conectserv.com</p>

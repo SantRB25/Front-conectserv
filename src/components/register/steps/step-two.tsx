@@ -2,17 +2,9 @@
 import { Button } from "@/components/ui/button"
 import { useRegisterStore } from "@/store/register-store"
 import { GoogleRegisterButton } from "../google-register-button"
-import { Mail } from "lucide-react"
 
 export function StepTwo() {
   const { setStep, setFormData } = useRegisterStore()
-
-  const handleEmailRegister = () => {
-    setFormData({
-      registrationType: "email",
-    })
-    setStep(3)
-  }
 
   return (
     <>
@@ -24,15 +16,6 @@ export function StepTwo() {
           <span className="px-3 text-sm text-gray-500 bg-white">O</span>
           <div className="border-t border-gray-300 flex-grow"></div>
         </div>
-
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2"
-          onClick={handleEmailRegister}
-        >
-          <Mail className="h-5 w-5" />
-          Continuar con Email
-        </Button>
 
         <button
           className="my-5 flex items-center justify-center w-full px-5 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-[#25D366] hover:bg-opacity-90 hover:pointer text-white focus:outline-none focus:ring-2 focus:ring-gray-300 "

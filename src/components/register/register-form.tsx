@@ -5,7 +5,6 @@ import { useRegisterStore } from "@/store/register-store"
 import { StepOne } from "./steps/step-one"
 import { StepTwo } from "./steps/step-two"
 import { StepThree } from "./steps/step-three"
-import { StepFour } from "./steps/step-four"
 
 interface RegisterFormProps {
   initialStep?: number
@@ -34,7 +33,7 @@ export function RegisterForm({ initialStep = 1, googleUserData }: RegisterFormPr
   }, [googleUserData, setFormData, setStep, initialStep])
 
   // Determinar el número total de pasos según el tipo de registro
-  const totalSteps = registrationType === "google" ? 3 : 4
+  const totalSteps = 3
 
   return (
     <>
@@ -50,20 +49,14 @@ export function RegisterForm({ initialStep = 1, googleUserData }: RegisterFormPr
       {step === 1 && <StepOne />}
       {step === 2 && <StepTwo />}
       {step === 3 && <StepThree />}
-      {step === 4 && <StepFour />}
 
       <div className="flex justify-between pt-4 border-t">
         <p className="text-sm text-muted-foreground">
-          Paso {step === 1 ? 1 : step - 1} de {totalSteps}
+          Paso {step} de {totalSteps}
         </p>
         <div className="flex gap-1">
           {Array.from({ length: totalSteps }).map((_, i) => (
-            <div
-              key={i}
-              className={`w-2 h-2 rounded-full ${
-                (step === 1 && i === 0) || (step > 1 && i === step - 2) ? "bg-primary" : "bg-gray-200"
-              }`}
-            />
+            <div key={i} className={`w-2 h-2 rounded-full ${i + 1 <= step ? "bg-primary" : "bg-gray-200"}`} />
           ))}
         </div>
       </div>

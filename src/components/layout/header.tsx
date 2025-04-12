@@ -1,83 +1,52 @@
-"use client"
-
-import { useState } from "react"
-import Link from "next/link"
-import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Container } from "@/components/ui/container"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Suspense } from "react"
+import Link from "next/link"
+import { ServicesMenu } from "./services-menu"
+import { MobileMenu } from "./mobile-menu"
 
 export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
   return (
     <header className="border-b bg-background">
-      <Container>
+      <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="text-2xl font-bold text-primary-color">
-            Logo
+            <img src="/logo.svg" className="h-7" alt="Logo" />
           </Link>
+
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-sm font-medium hover:text-primary-color">
               Inicio
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+
+            {/* Menú de servicios con Suspense para carga asíncrona */}
+            <Suspense
+              fallback={
                 <Button variant="ghost" className="text-sm font-medium hover:text-primary-color">
-                  Servicios
+                  Servicios...
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Electricistas</DropdownMenuItem>
-                <DropdownMenuItem>Pintores</DropdownMenuItem>
-                <DropdownMenuItem>Carpinteros</DropdownMenuItem>
-                <DropdownMenuItem>Jardineros</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              }
+            >
+              <ServicesMenu />
+            </Suspense>
+
             <Link href="/solicitar" className="text-sm font-medium hover:text-primary-color">
               Solicitar Servicio
             </Link>
-            <Link href="/acerca-de" className="text-sm font-medium hover:text-primary-color">
+            <Link href="#" className="text-sm font-medium hover:text-primary-color">
               Acerca de
             </Link>
-            <Link href="/soporte" className="text-sm font-medium hover:text-primary-color">
+            <Link href="#" className="text-sm font-medium hover:text-primary-color">
               Soporte
             </Link>
-            <Link href="/acceder" className="text-sm font-medium hover:text-primary-color">
+            <Link href="/login" className="text-sm font-medium hover:text-primary-color">
               Acceder
             </Link>
           </nav>
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
-          </Button>
+
+          {/* Menú móvil como componente cliente separado */}
+          <MobileMenu />
         </div>
-      </Container>
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <Container>
-            <nav className="py-4 flex flex-col gap-2">
-              <Link href="/" className="text-sm font-medium hover:text-primary-color">
-                Inicio
-              </Link>
-              <Link href="#" className="text-sm font-medium hover:text-primary-color">
-                Servicios
-              </Link>
-              <Link href="/solicitar" className="text-sm font-medium hover:text-primary-color">
-                Solicitar Servicio
-              </Link>
-              <Link href="/acerca-de" className="text-sm font-medium hover:text-primary-color">
-                Acerca de
-              </Link>
-              <Link href="/soporte" className="text-sm font-medium hover:text-primary-color">
-                Soporte
-              </Link>
-              <Link href="/acceder" className="text-sm font-medium hover:text-primary-color">
-                Acceder
-              </Link>
-            </nav>
-          </Container>
-        </div>
-      )}
+      </div>
     </header>
   )
 }

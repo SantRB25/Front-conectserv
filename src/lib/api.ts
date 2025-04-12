@@ -1,40 +1,39 @@
 import { API_BASE_URL } from "@/config/constants"
 
 export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const isFormData = options.body instanceof FormData
+
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers: isFormData
+        ? options.headers // no forzar Content-Type
+        : {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
     })
 
-    // Primero obtenemos el texto de la respuesta
     const responseText = await response.text()
 
-    // Intentamos parsear como JSON
     let data
     try {
       data = JSON.parse(responseText)
     } catch (e) {
-      console.log("Respuesta no-JSON recibida:")
-      console.log(responseText)
       throw new Error("La respuesta del servidor no es un JSON válido. Ver consola para detalles.")
     }
 
-    // Si la respuesta no es exitosa, lanzamos un error con los detalles
     if (!response.ok) {
       console.error("Error API:", data)
-      throw new Error(data.error || data.message || `Error ${response.status}: ${response.statusText}`)
+      throw data
     }
 
     return data as T
   } catch (error) {
-    console.error("Error en fetchApi:", error)
     throw error
   }
 }
+
 
 interface ApiResponse<T> {
   data: T[]
@@ -48,8 +47,10 @@ export interface Service {
 export interface RegisterResponse {
   success: boolean
   message: string
-  token?: string
-  data?: any
+}
+export interface DeleteResponse {
+  success: boolean
+  message: string
 }
 
 export interface LoginResponse {
@@ -62,6 +63,7 @@ export interface LoginResponse {
     apellido: string
     email: string
     imagen?: string
+    tipo_usuario?: string
   }
 }
 
@@ -94,15 +96,46 @@ export interface SolicitudResponse {
   errors?: Record<string, string[]>
 }
 
+// Agregar la interfaz para las estadísticas del dashboard después de las interfaces existentes
+export interface DashboardStatsResponse {
+  success: boolean
+  data: {
+    profesionales_registrados: number
+    verificacion_pendiente: number
+    profesionales_activos: number
+  }
+  error?: string
+}
+
+// Añadir esta interfaz para la respuesta de verificación de imágenes
+export interface VerifyImagesResponse {
+  success: boolean
+  message: string
+}
+
+export interface getDocumentsResponse {
+  success: boolean
+  message: string
+  data: {
+    imagen_identidad_frontal: string | null
+    imagen_identidad_dorso: string | null
+    imagen_real: string | null
+  }
+  errors?: string | object
+  error?: string
+}
+// Agregar el objeto admin dentro del objeto api
 export const api = {
+
+
   services: {
     list: () => fetchApi<ApiResponse<Service>>("/services"),
   },
   verification: {
-    sendCode: (phoneNumber: string) =>
+    sendCode: (phoneNumber: string, type?: string) =>
       fetchApi<{ success: boolean; message?: string; error?: string; details?: any }>(`/verify/whatsapp`, {
         method: "POST",
-        body: JSON.stringify({ numero: phoneNumber }),
+        body: JSON.stringify({ numero: phoneNumber, type: type }),
       }),
     checkCode: (phoneNumber: string, code: string) =>
       fetchApi<{ success: boolean; message?: string; error?: string }>("/verify/check", {
@@ -110,10 +143,8 @@ export const api = {
         body: JSON.stringify({ numero: phoneNumber, codigo: code }),
       }),
     verifyGoogleId: async (googleId: string) => {
-      console.log("API: Verificando Google ID:", googleId)
       try {
         const response = await fetchApi<GoogleVerifyResponse>(`/verificar-google/${googleId}`)
-        console.log("API: Respuesta de verificación:", response)
         return response
       } catch (error) {
         console.error("API: Error al verificar Google ID:", error)
@@ -123,6 +154,29 @@ export const api = {
     verifyFacebookId: (facebookId: string) => fetchApi<FacebookVerifyResponse>(`/verify_facebook/${facebookId}`),
   },
   professional: {
+    uploadDocs: (formData: FormData) =>
+      fetch(`${API_BASE_URL}/profesional/subir-documentos`, {
+        method: "POST",
+        body: formData,
+      }).then(async (res) => {
+        const text = await res.text()
+        try {
+          const data = JSON.parse(text)
+          if (!res.ok) throw data
+          return data as RegisterResponse
+        } catch (e) {
+          console.error("Respuesta no JSON:", text)
+          throw new Error("Respuesta del servidor inválida.")
+        }
+      }),
+    deleteDocument: (user_id: string, documento: string) =>
+      fetchApi<DeleteResponse>("/profesional/delete-document", {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: user_id,
+          documento: documento
+        }),
+      }),
     register: (data: any) =>
       fetchApi<RegisterResponse>("/profesionales", {
         method: "POST",
@@ -142,7 +196,6 @@ export const api = {
         }),
       }),
     login: async (type: string, id: string, password: string) => {
-      console.log(`API: Intentando login con medio: ${type}, id: ${id}`)
       try {
         const response = await fetchApi<LoginResponse>("/login", {
           method: "POST",
@@ -152,13 +205,14 @@ export const api = {
             // No se envía la clave según la imagen
           }),
         })
-        console.log("API: Respuesta de login:", response)
         return response
       } catch (error) {
         console.error("API: Error en login:", error)
         throw error
       }
     },
+    verifyImages: (id: number | string) => fetchApi<VerifyImagesResponse>(`/profesionales/${id}/verificar-imagenes`),
+    getDocuments: (id: number | string) => fetchApi<getDocumentsResponse>(`/profesional/${id}/obtener-documentos`),
   },
   solicitudes: {
     create: (data: {
@@ -174,5 +228,14 @@ export const api = {
         body: JSON.stringify(data),
       }),
   },
+  admin: {
+    dashboard: {
+      getStats: (token: string) =>
+        fetchApi<DashboardStatsResponse>("/admin/dashboard/stats", {
+          headers: {
+            Authorization: token,
+          },
+        }),
+    },
+  },
 }
-

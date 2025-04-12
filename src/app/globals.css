@@ -1,3 +1,4 @@
+@import url("https://fonts.cdnfonts.com/css/avenir-next-lt-pro");
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
@@ -115,9 +116,26 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Avenir Next LT Pro", sans-serif;
   }
+}
+/* Clases de utilidad personalizadas */
+.bg-dark {
+  background-color: #1f2937;
+}
+
+.text-dark {
+  color: #1f2937;
+}
+
+.bg-primary-color {
+  background-color: #0058a2;
+}
+
+.bg-secondary-color {
+  background-color: #ff6b0b;
 }

@@ -46,7 +46,6 @@ export function StepFour() {
         ...values,
       }
 
-      console.log("Datos del registro:", allFormData)
 
       // 1. Registrar al usuario en la API
       const response = await api.professional.register(allFormData)
@@ -55,8 +54,8 @@ export function StepFour() {
         throw new Error(response.message || "Error en el registro")
       }
 
-      console.log("Registro exitoso:", response)
-
+      router.push("/register/success")
+/*
       // 2. Determinar las credenciales para iniciar sesión según el método de registro
       let credentials: Record<string, string> = {}
 
@@ -105,7 +104,7 @@ export function StepFour() {
       }
 
       // 4. Redirigir al dashboard
-      router.push("/dashboard")
+      router.push("/dashboard")*/
     } catch (error: any) {
       console.error("Error en el proceso:", error)
       setError(error.message || "Ocurrió un error durante el registro")

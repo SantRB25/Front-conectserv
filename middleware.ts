@@ -6,17 +6,17 @@ export async function middleware(request: NextRequest) {
   const session = await auth()
   const { pathname } = request.nextUrl
 
-  // Si el usuario está autenticado y trata de acceder a login o register, redirigir al dashboard
-  if (session && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url))
-  }
-
-  // Si el usuario NO está autenticado y trata de acceder a rutas protegidas
+  // Si el usuario no está autenticado y trata de acceder a rutas protegidas
   if (!session && pathname.startsWith("/dashboard")) {
     // Redirigir al login con el returnTo para volver después de iniciar sesión
     const url = new URL("/login", request.url)
     url.searchParams.set("returnTo", pathname)
     return NextResponse.redirect(url)
+  }
+
+  // Si el usuario está autenticado y trata de acceder a login o register, redirigir al dashboard
+  if (session && (pathname === "/login" || pathname === "/register")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   // En cualquier otro caso, permitir el acceso
@@ -31,4 +31,3 @@ export const config = {
     "/register", // Verificar register
   ],
 }
-

@@ -46,7 +46,7 @@ export const config = {
             email: response.data.email || "",
             image: response.data.imagen || null,
             token: response.token,
-            tipo_usuario: response.data.tipo_usuario, // Asegurarse de que tipo_usuario esté incluido
+            role: response.data.tipo_usuario
           }
         } catch (error) {
           console.error("Error en authorize:", error)
@@ -56,7 +56,7 @@ export const config = {
     }),
   ],
   callbacks: {
-    // Modificar la sesión para incluir el ID, token y tipo_usuario
+    // Modificar la sesión para incluir el ID y token
     async session({ session, token }) {
       if (session.user) {
         // Verificar que token.sub existe antes de asignarlo
@@ -68,15 +68,10 @@ export const config = {
         if (token.token) {
           session.token = token.token as string
         }
-
-        // Añadir el tipo_usuario a la sesión
-        if (token.tipo_usuario) {
-          session.user.tipo_usuario = token.tipo_usuario as string
-        }
       }
       return session
     },
-    // Asegurarse de que el token incluya el sub, token y tipo_usuario
+    // Asegurarse de que el token incluya el sub y el token de autenticación
     async jwt({ token, user, account, profile }) {
       // Cuando el usuario se autentica inicialmente
       if (user) {
@@ -84,10 +79,6 @@ export const config = {
         // Si el usuario tiene un token (de credentials provider), guardarlo
         if ("token" in user && user.token) {
           token.token = user.token
-        }
-        // Si el usuario tiene un tipo_usuario, guardarlo
-        if ("tipo_usuario" in user && user.tipo_usuario) {
-          token.tipo_usuario = user.tipo_usuario
         }
       }
 
@@ -98,11 +89,11 @@ export const config = {
           // Llamar directamente a login sin verificación previa
           const loginResponse = await api.professional.login("google", profile.sub, "")
 
+
           if (loginResponse.success && loginResponse.data) {
             // Si el login es exitoso, actualizar el token con la información del usuario
             token.sub = loginResponse.data.id.toString()
             token.token = loginResponse.token
-            token.tipo_usuario = loginResponse.data.tipo_usuario // Asegurarse de que tipo_usuario esté incluido
 
           } else {
             return null as any
@@ -147,3 +138,4 @@ export const config = {
 } satisfies NextAuthConfig
 
 export const { handlers, signIn, signOut, auth } = NextAuth(config)
+

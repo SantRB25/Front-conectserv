@@ -1,60 +1,72 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Container } from "@/components/ui/container"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { api, type Service } from "@/lib/api"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react";
+import { Container } from "@/components/ui/container";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { api, type Service } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export function Hero() {
-  const [services, setServices] = useState<Service[]>([])
-  const [selectedService, setSelectedService] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchServices() {
       try {
-        const response = await api.services.list()
-        setServices(response.data)
-        setError(null)
+        const response = await api.services.list();
+        setServices(response.data);
+        setError(null);
       } catch (err) {
-        console.error("Error fetching services:", err)
-        setError("No se pudieron cargar los servicios. Por favor, intente nuevamente.")
+        console.error("Error fetching services:", err);
+        setError(
+          "No se pudieron cargar los servicios. Por favor, intente nuevamente."
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    fetchServices()
-  }, [])
+    fetchServices();
+  }, []);
 
   const handleSearch = () => {
-    if (selectedService) {
-      // Redirigir a la página de solicitud con el servicio preseleccionado
-      router.push(`/solicitar?service=${selectedService}`)
+    if (searchQuery) {
+      router.push(`/solicitar?query=${encodeURIComponent(searchQuery)}`);
+    } else if (selectedService) {
+      router.push(`/solicitar?service=${selectedService}`);
     } else {
-      // Si no hay servicio seleccionado, simplemente redirigir a la página de solicitud
-      router.push("/solicitar")
+      router.push("/solicitar");
     }
-  }
+  };
+
+  const handleServiceClick = (serviceId: string) => {
+    router.push(`/solicitar?service=${serviceId}`);
+  };
 
   return (
-    <section className="py-20 relative overflow-hidden bg-gradient-to-b from-blue-50 to-white">
-      <Container className="text-center relative">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl mb-4 text-dark">
-          Encuentra expertos de confianza para el servicio que necesitas
+    <section className="py-16 md:py-24 bg-[#0058A2] text-white">
+      <Container className="text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+          Encuentra expertos de confianza
         </h1>
-        <p className="text-xl text-dark/80 mb-8 max-w-3xl mx-auto">
-          Cuéntanos qué necesitas y contacta gratis con Electricistas, pintores, carpinteros, jardineros, especialistas
-          en reformas de viviendas y más...
+        <p className="text-lg mb-10 max-w-3xl mx-auto opacity-90">
+          Obtén una estimación del servicio que necesitas. Contacta gratis con
+          profesionales verificados.
         </p>
-        <div className="flex max-w-2xl mx-auto gap-4">
-          <Select value={selectedService} onValueChange={setSelectedService}>
-            <SelectTrigger className="text-lg h-12">
+
+        <div className="max-w-2xl mx-auto mb-8 flex">
+          <Select value={selectedService} onValueChange={setSelectedService} >
+            <SelectTrigger className="flex-grow rounded-l-full rounded-r-none border-0 h-14 text-gray-800 bg-white">
               <SelectValue placeholder="¿Qué tipo de servicio buscas?" />
             </SelectTrigger>
             <SelectContent>
@@ -75,13 +87,33 @@ export function Hero() {
               )}
             </SelectContent>
           </Select>
-          <Button size="lg" className="px-8 bg-secondary hover:bg-secondary/90 text-white" onClick={handleSearch}>
-            <Search className="mr-2 h-5 w-5" />
+
+          <button
+            onClick={handleSearch}
+            className="bg-[#FF6B0B] hover:bg-[#e55f00] text-white font-medium py-4 px-8 rounded-r-full transition-colors h-14"
+          >
             Buscar
-          </Button>
+          </button>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+          {isLoading ? (
+            <div className="text-white opacity-80">Cargando servicios...</div>
+          ) : error ? (
+            <div className="text-white opacity-80">{error}</div>
+          ) : (
+            services.slice(0, 6).map((service) => (
+              <button
+                key={service.id}
+                onClick={() => handleServiceClick(service.id.toString())}
+                className="bg-white text-[#0058A2] py-2 px-4 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
+              >
+                {service.name}
+              </button>
+            ))
+          )}
         </div>
       </Container>
     </section>
-  )
+  );
 }
-

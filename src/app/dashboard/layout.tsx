@@ -18,8 +18,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar fijo a la izquierda */}
+    <div className="flex min-h-screen bg-[#f5f7fa]">
+      {/* Sidebar component - handles both desktop and mobile views */}
       <DashboardSidebar />
 
       {/* Contenido principal con header y contenido */}

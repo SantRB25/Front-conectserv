@@ -78,7 +78,7 @@ export default function LoginForm() {
 
     try {
       // Llamar a la API para enviar el código de verificación
-      const response = await api.verification.sendCode(values.whatsapp, "login")
+      const response = await api.verification.sendCode(values.whatsapp,'login')
 
       if (response.success) {
         setStep("code")
@@ -108,7 +108,7 @@ export default function LoginForm() {
           id: phoneNumber,
           redirect: false,
         })
-
+        
         if (result?.error) {
           setError("Error al iniciar sesión. Por favor, intenta nuevamente.")
         } else {
@@ -152,7 +152,7 @@ export default function LoginForm() {
   return (
     <>
       {error && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -160,7 +160,7 @@ export default function LoginForm() {
 
       <Button
         variant="outline"
-        className="w-full h-12 border-gray-300 hover:bg-gray-50 transition-colors"
+        className="w-full h-12"
         onClick={handleGoogleLogin}
         disabled={isGoogleLoading || isLoading}
       >
@@ -190,40 +190,32 @@ export default function LoginForm() {
         Ingresar con Google
       </Button>
 
-      <div className="relative flex items-center justify-center my-6">
+      <div className="relative flex items-center justify-center my-4">
         <Separator className="flex-1" />
-        <span className="px-3 text-xs text-gray-500 font-medium">o</span>
+        <span className="px-3 text-xs text-muted-foreground">o</span>
         <Separator className="flex-1" />
       </div>
 
       {step === "phone" ? (
         <Form {...whatsappForm}>
-          <form onSubmit={whatsappForm.handleSubmit(onSubmitWhatsapp)} className="space-y-5">
+          <form onSubmit={whatsappForm.handleSubmit(onSubmitWhatsapp)} className="space-y-4">
             <FormField
               control={whatsappForm.control}
               name="whatsapp"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Número de WhatsApp</FormLabel>
+                  <FormLabel>Número de WhatsApp</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-4 h-4 w-4 text-gray-400" />
-                      <Input
-                        className="pl-10 border-gray-300 focus:border-primary focus:ring-primary"
-                        placeholder="Ingresa tu número de WhatsApp"
-                        {...field}
-                      />
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input className="pl-10" placeholder="Ingresa tu número de WhatsApp" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button
-              className="w-full h-12 bg-primary hover:bg-primary/90 transition-colors"
-              type="submit"
-              disabled={isLoading}
-            >
+            <Button className="w-full" type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Ingresar con WhatsApp
             </Button>
@@ -231,10 +223,10 @@ export default function LoginForm() {
         </Form>
       ) : (
         <Form {...codeForm}>
-          <form onSubmit={codeForm.handleSubmit(onSubmitCode)} className="space-y-5">
-            <div className="mb-4 text-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-sm text-gray-600">Hemos enviado un código de verificación al número</p>
-              <p className="font-medium text-gray-900">{phoneNumber}</p>
+          <form onSubmit={codeForm.handleSubmit(onSubmitCode)} className="space-y-4">
+          <div className="mb-4 text-center">
+              <p className="text-sm text-muted-foreground">Hemos enviado un código de verificación al número</p>
+              <p className="font-medium">{phoneNumber}</p>
             </div>
 
             <FormField
@@ -242,36 +234,31 @@ export default function LoginForm() {
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Código de verificación</FormLabel>
+                  <FormLabel>Código de verificación</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <div className="relative">
+                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        className="pl-10 text-center tracking-widest font-mono text-lg h-12 border-gray-300 focus:border-primary focus:ring-primary"
+                        className="pl-10 text-center tracking-widest font-mono text-lg"
                         placeholder="000000"
                         maxLength={6}
                         {...field}
                       />
-                    </div>
-                  </FormControl>
+                    </div>                  
+                    </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="space-y-3">
-              <Button
-                className="w-full h-12 bg-primary hover:bg-primary/90 transition-colors"
-                type="submit"
-                disabled={isLoading}
-              >
+            <div className="flex flex-col space-y-2">
+              <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Verificar código
               </Button>
-
               <Button
                 variant="ghost"
                 type="button"
-                className="w-full text-sm text-gray-600 hover:text-gray-900"
+                className="text-sm"
                 onClick={() => setStep("phone")}
                 disabled={isLoading}
               >
@@ -282,8 +269,8 @@ export default function LoginForm() {
         </Form>
       )}
 
-      <div className="text-center text-sm mt-8 pt-4 border-t border-gray-100">
-        <Link href="/register" className="text-primary hover:text-primary/80 font-medium">
+      <div className="text-center text-sm mt-6">
+        <Link href="/register" className="text-primary hover:underline">
           ¿Aún no tienes una cuenta? Regístrate
         </Link>
       </div>
