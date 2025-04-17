@@ -4,4 +4,4 @@
     : "https://conectserv.perudevsolutions.com/api";
 */
 
-export const API_BASE_URL = "http://localhost/conectserv/conectserv_backend/public/api";
+export const API_BASE_URL = "https://conectserv.perudevsolutions.com/api";
