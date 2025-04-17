@@ -253,11 +253,12 @@ export function StepThree() {
     }
 
     setIsCheckingCode(true);
-
+    const rawWhatsapp = form.getValues("whatsapp");
+    const normalizedWhatsapp = normalizeParaguayPhoneNumber(rawWhatsapp);
     try {
       // Llamar a la API para verificar el código
       const response = await api.verification.checkCode(
-        form.getValues("whatsapp"),
+        normalizedWhatsapp,
         verificationCode
       );
 
