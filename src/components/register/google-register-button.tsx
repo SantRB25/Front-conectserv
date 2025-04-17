@@ -58,6 +58,9 @@ export function GoogleRegisterButton() {
   };
 
   const handleGoogleClick = () => {
+
+    setFormData({ registrationType: "google" });
+    
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const redirectUri = `${window.location.origin}/register`;
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile&prompt=select_account`;

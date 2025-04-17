@@ -81,7 +81,7 @@ export function Hero() {
               ) : (
                 services.map((service) => (
                   <SelectItem key={service.id} value={service.id.toString()}>
-                    {service.name}
+                    {service.nombre}
                   </SelectItem>
                 ))
               )}
@@ -108,7 +108,7 @@ export function Hero() {
                 onClick={() => handleServiceClick(service.id.toString())}
                 className="bg-white text-[#0058A2] py-2 px-4 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
               >
-                {service.name}
+                {service.nombre}
               </button>
             ))
           )}

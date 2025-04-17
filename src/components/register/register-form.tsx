@@ -38,9 +38,9 @@ export function RegisterForm({ initialStep = 1, googleUserData }: RegisterFormPr
   return (
     <>
       <div>
-        <h1 className="text-3xl font-semibold">Únete</h1>
-        <h1 className="text-3xl font-semibold my-3">Crea tu cuenta ConectServ</h1>
-        <p className="my-3">
+        <h1 className="text-xl md:text-3xl font-semibold">Únete</h1>
+        <h1 className="text-lg md:text-3xl font-semibold my-3">Crea tu cuenta ConectServ</h1>
+        <p className="text-xs text-md my-3">
           y sé parte de la comunidad que conecta profesionales con clientes. Encuentra expertos en carpintería,
           albañilería, plomería y más, o si eres un profesional, ofrece tus servicios y haz crecer tu negocio.
         </p>

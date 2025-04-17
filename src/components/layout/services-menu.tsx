@@ -38,7 +38,7 @@ export function ServicesMenu() {
           services.map((service) => (
             <DropdownMenuItem key={service.id}>
               <Link href={`/servicios/${service.id}`} className="w-full">
-                {service.name}
+                {service.nombre}
               </Link>
             </DropdownMenuItem>
           ))

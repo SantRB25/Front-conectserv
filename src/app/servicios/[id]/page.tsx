@@ -31,15 +31,15 @@ export default async function ServicioPage({ params }: ServicioPageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">{service.name}</h1>
+        <h1 className="text-3xl font-bold mb-6">{service.nombre}</h1>
 
         <p className="text-lg mb-8">
-          Conectamos a los mejores profesionales de {service.name?.toLowerCase()} con clientes que necesitan servicios de
+          Conectamos a los mejores profesionales de {service.nombre?.toLowerCase()} con clientes que necesitan servicios de
           calidad.
         </p>
 
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">¿Necesitas un servicio de {service.name.toLowerCase()}?</h2>
+          <h2 className="text-xl font-semibold mb-4">¿Necesitas un servicio de {service.nombre.toLowerCase()}?</h2>
           <p className="mb-4">
             Nuestros profesionales verificados están listos para ayudarte con cualquier proyecto o reparación.
           </p>

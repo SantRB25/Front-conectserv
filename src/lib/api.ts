@@ -20,6 +20,7 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
     try {
       data = JSON.parse(responseText)
     } catch (e) {
+      console.log(e);
       throw new Error("La respuesta del servidor no es un JSON válido. Ver consola para detalles.")
     }
 
@@ -30,6 +31,7 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
 
     return data as T
   } catch (error) {
+    console.log(error);
     throw error
   }
 }
@@ -41,7 +43,7 @@ interface ApiResponse<T> {
 
 export interface Service {
   id: number
-  name: string
+  nombre: string
 }
 
 export interface RegisterResponse {
@@ -181,7 +183,8 @@ export const api = {
       fetchApi<RegisterResponse>("/profesionales", {
         method: "POST",
         body: JSON.stringify({
-          servicio_id: data.service,
+          //servicio_id: data.service,
+          servicios: data.services,
           ubicacion_texto: data.zone,
           latitud: data.lat,
           longitud: data.lng,

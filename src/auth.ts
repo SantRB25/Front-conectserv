@@ -36,7 +36,8 @@ export const config = {
           )
 
           if (!response.success || !response.data) {
-            throw new Error(response.message || "Credenciales inválidas")
+            console.log(response);
+            throw new Error(response.message)
           }
 
           // Devolver el usuario con el token para que NextAuth lo guarde en la sesión

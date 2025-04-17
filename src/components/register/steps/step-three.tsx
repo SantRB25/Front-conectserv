@@ -17,8 +17,8 @@ import { CheckCircle, AlertCircle, Info, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
-import { signIn } from "@/auth"
-
+//import { signIn } from "@/auth";
+import { signIn } from "next-auth/react"
 const phoneRegex = /^\+[1-9]\d{1,14}$/;
 
 const formSchema = z.object({
@@ -31,12 +31,31 @@ const formSchema = z.object({
   age: z.string().min(2, {
     message: "La edad es requerida.",
   }),
-  whatsapp: z.string().refine((value) => phoneRegex.test(value), {
-    message: "Formato inválido. Debe incluir código de país (ej: +51993187237)",
-  }),
+  whatsapp: z.string().refine(
+    (value) => {
+      // Aceptar números locales como 0991... o internacionales como +519...
+      return /^0\d{8,9}$/.test(value) || /^\+\d{10,15}$/.test(value);
+    },
+    {
+      message:
+        "Número inválido. Usa formato local (ej: 0991447585) o internacional (ej: +51993187237)",
+    }
+  ),
   isWhatsappVerified: z.boolean().optional(),
 });
+const normalizeParaguayPhoneNumber = (rawNumber: string): string => {
+  if (rawNumber.startsWith("+")) {
+    return rawNumber; // Ya viene con código de país
+  }
 
+  if (rawNumber.startsWith("0")) {
+    // Local paraguayo, reemplazar 0 por +595
+    return "+595" + rawNumber.substring(1);
+  }
+
+  // Si no tiene ni + ni 0, asumimos inválido (pero por si acaso)
+  return rawNumber;
+};
 export function StepThree() {
   const router = useRouter();
   const { setStep, setFormData, formData, reset } = useRegisterStore();
@@ -113,7 +132,6 @@ export function StepThree() {
         ...formData,
         ...values,
       };
-
       // 1. Registrar al usuario en la API
       const response = await api.professional.register(allFormData);
 
@@ -121,11 +139,8 @@ export function StepThree() {
         throw new Error(response.message || "Error en el registro");
       }
 
-      router.push("/register/success")
-/*
-      // 2. Determinar las credenciales para iniciar sesión según el método de registro
       let credentials: Record<string, string> = {};
-
+      console.log(allFormData);
       switch (allFormData.registrationType) {
         case "google":
           if (!allFormData.google_id) {
@@ -134,8 +149,14 @@ export function StepThree() {
             );
           }
           credentials = {
-            type: "google_id",
+            type: "google",
             id: allFormData.google_id,
+          };
+          break;
+        case "whatsapp":
+          credentials = {
+            type: "whatsapp",
+            id: allFormData.whatsapp,
           };
           break;
       }
@@ -149,12 +170,8 @@ export function StepThree() {
       if (signInResult?.error) {
         throw new Error(signInResult.error || "Error al iniciar sesión");
       }
-
-      // 4. Redirigir al dashboard
-      router.push("/dashboard");
-
-      // Limpiamos el store después de un registro exitoso
-      reset();*/
+      router.push("/dashboard/informacion")
+      //router.push("/register/success")
     } catch (error: any) {
       console.error("Error al finalizar el registro:", error);
       setVerificationError(
@@ -166,24 +183,22 @@ export function StepThree() {
   }
 
   const sendVerificationCode = async (isResend = false) => {
-    if (isResend) {
-      setIsResending(true);
-    } else {
-      setIsVerifying(true);
-    }
+    if (isResend) setIsResending(true);
+    else setIsVerifying(true);
 
     setVerificationError(null);
     setVerificationSuccess(null);
     setDebugInfo(null);
 
-    const whatsappNumber = form.getValues("whatsapp");
+    const rawWhatsapp = form.getValues("whatsapp");
+    const normalizedWhatsapp = normalizeParaguayPhoneNumber(rawWhatsapp);
 
-    // Validar el formato del número
-    if (!phoneRegex.test(whatsappNumber)) {
+    // Validación previa (por si acaso)
+    if (!/^\+\d{10,15}$/.test(normalizedWhatsapp)) {
       form.setError("whatsapp", {
         type: "manual",
         message:
-          "Formato inválido. Debe incluir código de país (ej: +51993187237)",
+          "Número inválido luego de la conversión a formato internacional.",
       });
       setIsVerifying(false);
       setIsResending(false);
@@ -191,8 +206,7 @@ export function StepThree() {
     }
 
     try {
-      // Llamar a la API para enviar el código de verificación
-      const response = await api.verification.sendCode(whatsappNumber);
+      const response = await api.verification.sendCode(normalizedWhatsapp);
 
       if (response.success) {
         const message = isResend

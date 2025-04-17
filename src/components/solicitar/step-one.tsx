@@ -58,7 +58,7 @@ export function StepOne({ form }: StepOneProps) {
                     ) : services.length > 0 ? (
                       services.map((service) => (
                         <SelectItem key={service.id} value={service.id.toString()}>
-                          {service.name}
+                          {service.nombre}
                         </SelectItem>
                       ))
                     ) : (

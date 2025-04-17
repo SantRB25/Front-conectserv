@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware"
 interface RegisterState {
   step: number
   formData: {
-    service?: string
+    services?: number[]
     zone?: string
     lat?: number
     lng?: number
@@ -21,7 +21,7 @@ interface RegisterState {
     google_id?: string
     facebook_id?: string
     email?: string | null
-    registrationType?: "google" | "facebook" | "email"
+    registrationType?: "google" | "whatsapp" | "email"
   }
   setStep: (step: number) => void
   setFormData: (data: Partial<RegisterState["formData"]>) => void

@@ -23,7 +23,7 @@ export default async function ServiciosPage() {
             <Link key={service.id} href={`/servicios/${service.id}`}>
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <h2 className="font-medium">{service.name}</h2>
+                  <h2 className="font-medium">{service.nombre}</h2>
                 </CardContent>
               </Card>
             </Link>
