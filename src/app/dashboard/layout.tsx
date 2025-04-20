@@ -23,7 +23,7 @@ export default async function DashboardLayout({
       <DashboardSidebar />
 
       {/* Contenido principal con header y contenido */}
-      <div className="flex-1 flex flex-col ml-0 md:ml-64">
+      <div className="flex-1 flex flex-col ml-0 md:ml-64 w-full">
         <DashboardHeader />
         <main className="flex-1 p-6 overflow-y-auto">{children}</main>
       </div>

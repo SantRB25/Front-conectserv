@@ -106,17 +106,17 @@ export const ProfesionalModal: React.FC<ProfesionalModalProps> = ({
         <DialogFooter>
           <Flex>
           <DialogClose asChild>
-            <Button variant="outline">Cerrar</Button>
+            <Button variant="outline" size={'sm'}>Cerrar</Button>
           </DialogClose>
           <Button
-              variant="destructive"
+              variant="destructive" size={'sm'}
               onClick={() => handleAccion("eliminar", profesional.uuid)}
             >
               Eliminar
             </Button>
 
             <Button
-              variant="success"
+              variant="success" size={'sm'}
               onClick={() => handleAccion("aprobar", profesional.uuid)}
             >
               Aprobar
