@@ -2,7 +2,7 @@ import { fetchApi } from "@/lib/fetchApi"
 
 interface ApiResponse<T> {
   success: boolean
-  data: T | Paginacion<T>
+  data?: T | Paginacion<T>
   message?: string
 }
 export interface DataPagination {
@@ -74,6 +74,34 @@ export const apiAdmin = {
           Authorization: token,
         },
       }),
+    subirDocumento: (token: string, formData: FormData) => fetchApi<ApiResponse<any>>(`/admin/profesional/subir-documentos`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: formData,
+    }),
+    eliminarDocumento: (token: string, user_id: string, documento: string) =>
+          fetchApi("/profesional/delete-document", {
+            method: "POST",
+            headers: {
+              Authorization: token,
+            },
+            body: JSON.stringify({
+              user_id: user_id,
+              documento: documento
+            }),
+          }),
+    estadoDocumento: (token: string, user_id: number) => fetchApi<ApiResponse<string>>(`/admin/profesional/estado-documento`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        user_id: user_id,
+      })
+    })
+
   },
 };
 

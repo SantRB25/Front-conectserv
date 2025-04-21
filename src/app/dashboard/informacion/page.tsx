@@ -1,269 +1,275 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { FilePreview } from "@/components/ui/file-preview";
+import { Flex } from "@/components/ui/flex";
+import IconDocumentoDorso from "@/components/ui/icons/IconDocumentoDorso";
+import IconDocumentoFrontal from "@/components/ui/icons/IconDocumentoFrontal";
+import IconFotoPerfil from "@/components/ui/icons/IconFotoPerfil";
+import { api } from "@/lib/api";
+import { apiAdmin } from "@/lib/apiAdmin";
+import { Loader2, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
-import { AccessDenied } from "@/components/access-denied";
-import { UploadCloud, FileText, Loader2, Trash } from "lucide-react";
-import Image from "next/image";
 
-function isPdf(url: string | null) {
-  return url?.toLowerCase().endsWith(".pdf");
+type FileType = "frontal" | "dorso" | "real";
+
+interface FileInputBlockProps {
+  label: string;
+  type: FileType;
+  existingUrl: string | null;
+  onDelete: () => void;
+  isLoading: boolean;
 }
 
-function FilePreview({ url }: { url: string | null }) {
-  if (!url) return null;
-
-  return (
-    <div className="w-[200px] h-[200px] rounded-xl overflow-hidden shadow border flex items-center justify-center">
-      {isPdf(url) ? (
-        <FileText className="w-16 h-16 text-gray-500" />
-      ) : (
-        <Image
-          src={url}
-          alt="Documento"
-          width={200}
-          height={200}
-          className="object-cover w-full h-full"
-        />
-      )}
-    </div>
-  );
-}
-
-export default function SubirDocumentosPage() {
+function useDocumentoStep() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [setMessage] = useState<string | null>(null);
-  const [profesionalDocumentoFrontal, setProfesionalDocumentoFrontal] =
-    useState<string | null>(null);
-  const [profesionalDocumentoDorso, setProfesionalDocumentoDorso] = useState<
-    string | null
-  >(null);
-  const [profesionalDocumentoReal, setProfesionalDocumentoReal] = useState<
-    string | null
-  >(null);
-  const [files, setFiles] = useState({
-    frontal: null as File | null,
-    dorso: null as File | null,
-    real: null as File | null,
+  const [estadoDocumento, setEstadoDocumento] = useState<string | null>(null);
+  const [documentUrls, setDocumentUrls] = useState({
+    frontal: null as string | null,
+    dorso: null as string | null,
+    real: null as string | null,
   });
 
-  if (session?.user?.tipo_usuario !== "profesional") return <AccessDenied />;
-  /*
-  const handleTrash = async (document: string) => {
-    if (!session?.user?.id || session.user.tipo_usuario === "administrador") {
-      setIsLoading(false);
-      return;
+  const checkStatus = async () => {
+    if (!session?.token || !session?.user?.id) return;
+    const response = await apiAdmin.profesionales.estadoDocumento(
+      session.token,
+      parseInt(session.user.id)
+    );
+    if (response.success) {
+      setEstadoDocumento(response.data as string);
     }
-
-    try {
-      setIsLoading(true);
-      const response = await api.professional.getDocuments(session.user.id);
-
-      await getDocuments();
-    } catch (error) {
-      console.error("Error al eliminar el documento:", error);
-      setMessage("Error al eliminar el documento");
-    } finally {
-      setIsLoading(false);
-    }
-  };*/
+  };
 
   const getDocuments = async () => {
-    if (!session?.user?.id || session.user.tipo_usuario === "administrador") {
-      setIsLoading(false);
-      return;
-    }
+    if (!session?.user?.id || session.user.tipo_usuario !== "profesional") return;
 
     try {
-      setIsLoading(true);
-      const response = await api.professional.getDocuments(session.user.id);
-
-      setProfesionalDocumentoFrontal(response.data.imagen_identidad_frontal);
-      setProfesionalDocumentoDorso(response.data.imagen_identidad_dorso);
-      setProfesionalDocumentoReal(response.data.imagen_real);
+      const { data } = await api.professional.getDocuments(session.user.id);
+      setDocumentUrls({
+        frontal: data.imagen_identidad_frontal,
+        dorso: data.imagen_identidad_dorso,
+        real: data.imagen_real,
+      });
     } catch (error) {
       console.error("Error al verificar imágenes:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  const handleTrash = async (documento: string) => {
-    if (!session?.user?.id || session.user.tipo_usuario === "administrador") {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      await api.professional.deleteDocument(session.user.id, documento);
-      await getDocuments();
-      toast.success("Documento eliminado");
-    } catch (error) {
-      console.error("Error al eliminar el documento:", error);
-      toast.error("Error al eliminar el documento");
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!session?.user?.id) return;
-    const formData = new FormData();
-    formData.append("user_id", session.user.id.toString());
-    if (files.frontal)
-      formData.append("imagen_identidad_frontal", files.frontal);
-    if (files.dorso) formData.append("imagen_identidad_dorso", files.dorso);
-    if (files.real) formData.append("imagen_real", files.real);
-
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!session?.user?.id || !estadoDocumento) return;
+    const file = event.target.files?.[0];
+    if (file && session.token) {
+      const formData = new FormData();
+      formData.append("documento", file);
+      formData.append("tipo", estadoDocumento);
+      formData.append("user_id", session.user.id);
+      try {
+        setLoading(true);
+        const response = await apiAdmin.profesionales.subirDocumento(
+          session.token,
+          formData
+        );
+        if (response.success) {
+          setEstadoDocumento(response.data);
+          await getDocuments();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+  const handleDelete = async (tipo: FileType) => {
+    if (!session?.user?.id || !session?.token) return;
+  
     try {
-      setLoading(true);
-      const res = await api.professional.uploadDocs(formData);
-      await getDocuments();
-      toast.success("Documentos subidos correctamente");
-    } catch (err: any) {
-      toast.error("Error al subir documentos");
-      console.error(err);
+
+      setLoading(true);  
+      await apiAdmin.profesionales.eliminarDocumento(session.token, session.user.id, tipo);
+      //await getDocuments();
+      checkStatus();
+    } catch (err) {
+      console.error("Error al eliminar documento:", err);
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
+    checkStatus();
     getDocuments();
-  }, [session]);
+  }, []);
+
+  return { estadoDocumento, handleFileChange,handleDelete, loading, documentUrls };
+}
+
+function TituloDocumento({ estado }: { estado: string | null }) {
+  const titulos: Record<string, string> = {
+    imagen_identidad_frontal: "Frontal del documento",
+    imagen_identidad_dorso: "Dorso del documento",
+    imagen_real: "Foto de perfil",
+    completo: "Documentación completa",
+  };
+
+  const descripciones: Record<string, string> = {
+    imagen_identidad_frontal:
+      "Toma una foto a tu documento o carga un PDF para confirmar tu perfil profesional. Este proceso es rápido y completamente confidencial.",
+    imagen_identidad_dorso:
+      "Ahora carga el dorso de tu documento para continuar con la verificación.",
+    imagen_real:
+      "Por último, subí una foto de perfil tipo carnet en donde se vea tu rostro claramente.",
+    completo:
+      "¡Has finalizado el proceso de carga de documentos! Pronto validaremos tu identidad.",
+  };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4 space-y-8">
-  <h1 className="text-3xl font-semibold text-gray-800">Verificación de Identidad</h1>
-  <p className="text-gray-500">Sube tus documentos oficiales para verificar tu perfil profesional. Los datos son confidenciales.</p>
-
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-xl">Documentos Requeridos</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-8">
-
-      {/* Documento Frontal */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium text-gray-700">Imagen Frontal del Documento</Label>
-        <Input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={(e) =>
-            setFiles({ ...files, frontal: e.target.files?.[0] || null })
-          }
-        />
-        {isLoading ? (
-          <div className="flex items-center gap-2 text-gray-500">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Cargando...
-          </div>
-        ) : profesionalDocumentoFrontal ? (
-          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md border">
-            <FilePreview url={profesionalDocumentoFrontal} />
-            <Button
-              type="button"
-              onClick={() => handleTrash("frontal")}
-              variant="ghost"
-              className="text-red-500 hover:text-red-600 text-2xl"
-            >
-              <Trash />
-            </Button>
-          </div>
-        ) : null}
+    <header className="bg-[#0058A2] text-white py-6 relative">
+      <div className="container mx-auto px-4 text-center">
+        <h1 className="text-2xl font-bold">{titulos[estado || ""]}</h1>
+        <p className="mt-2">{descripciones[estado || ""]}</p>
+        {estado !== "completo" && <BarraProgreso estado={estado} />}
       </div>
+    </header>
+  );
+}
 
-      {/* Documento Dorso */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium text-gray-700">Imagen del Dorso del Documento</Label>
-        <Input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={(e) =>
-            setFiles({ ...files, dorso: e.target.files?.[0] || null })
-          }
-        />
-        {isLoading ? (
-          <div className="flex items-center gap-2 text-gray-500">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Cargando...
-          </div>
-        ) : profesionalDocumentoDorso ? (
-          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md border">
-            <FilePreview url={profesionalDocumentoDorso} />
-            <Button
-              type="button"
-              onClick={() => handleTrash("dorso")}
-              variant="ghost"
-              className="text-red-500 hover:text-red-600 text-2xl"
-            >
-              <Trash />
-            </Button>
-          </div>
-        ) : null}
+function BarraProgreso({ estado }: { estado: string | null }) {
+  const progreso: Record<string, number> = {
+    imagen_identidad_frontal: 33,
+    imagen_identidad_dorso: 66,
+    imagen_real: 99,
+    completo: 100,
+  };
+
+  const porcentaje = progreso[estado || "imagen_identidad_frontal"] ?? 0;
+
+  return (
+    <div className="mt-6 max-w-md mx-auto">
+      <div className="bg-white/30 h-2 rounded-full w-full">
+        <div
+          className="bg-white h-2 rounded-full"
+          style={{ width: `${porcentaje}%` }}
+        ></div>
       </div>
+      <p className="text-sm mt-1">{porcentaje}% completado</p>
+    </div>
+  );
+}
 
-      {/* Foto Real */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium text-gray-700">Foto Real del Profesional</Label>
-        <Input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={(e) =>
-            setFiles({ ...files, real: e.target.files?.[0] || null })
-          }
-        />
-        {isLoading ? (
-          <div className="flex items-center gap-2 text-gray-500">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Cargando...
-          </div>
-        ) : profesionalDocumentoReal ? (
-          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md border">
-            <FilePreview url={profesionalDocumentoReal} />
-            <Button
-              type="button"
-              onClick={() => handleTrash("real")}
-              variant="ghost"
-              className="text-red-500 hover:text-red-600 text-2xl"
-            >
-              <Trash />
-            </Button>
-          </div>
-        ) : null}
-      </div>
+function SelectorIcono({ estado }: { estado: string | null }) {
+  if (estado === "imagen_identidad_dorso") return <IconDocumentoDorso className="w-32" />;
+  if (estado === "imagen_real") return <IconFotoPerfil className="w-32" />;
+  return <IconDocumentoFrontal className="w-32" />;
+}
 
-      {/* Botón Subir */}
-      <div className="pt-4">
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full sm:w-auto"
-        >
+function FileInputBlock({ label, type, existingUrl, onDelete, isLoading }: FileInputBlockProps) {
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-gray-500">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Cargando...
+        </div>
+      ) : existingUrl ? (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-3 rounded-md border gap-3">
+          <FilePreview url={existingUrl} />
+          <Button type="button" onClick={onDelete} variant="ghost" className="text-red-500 hover:text-red-600 text-2xl">
+            <Trash />
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DocumentoUploader({ estado, handleFileChange, loading }: {
+  estado: string | null;
+  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  loading: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-center w-full p-6">
+      <label
+        htmlFor="dropzone-file"
+        className="flex flex-col items-center justify-center w-full border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+      >
+        <div className="flex flex-col items-center justify-center pt-5 pb-6">
           {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Subiendo...
-            </>
+            <Loader2 className="w-10 h-10 animate-spin text-[#0058A2]" />
           ) : (
-            <>
-              <UploadCloud className="w-4 h-4 mr-2" />
-              Subir Documentos
-            </>
+            <SelectorIcono estado={estado} />
           )}
-        </Button>
-      </div>
-    </CardContent>
-  </Card>
-</div>
+          <p className="mb-2 text-sm text-gray-500">
+            <span className="font-semibold">Click para cargar</span> o soltá tu archivo
+          </p>
+          <p className="text-xs text-gray-500">PDF, PNG, JPG o GIF (MAX. 5MB)</p>
+        </div>
+        <input
+          id="dropzone-file"
+          onChange={handleFileChange}
+          type="file"
+          accept="image/*,application/pdf"
+          className="hidden"
+        />
+      </label>
+    </div>
+  );
+}
 
+export default function Informacion() {
+  const { estadoDocumento, handleFileChange,handleDelete, loading, documentUrls } = useDocumentoStep();
+
+  return (
+    <Card>
+      {estadoDocumento ? (
+        <>
+          <TituloDocumento estado={estadoDocumento} />
+          {estadoDocumento === "completo" ? (
+            <div className="p-6 space-y-4">
+              <p className="text-green-600 font-semibold text-center">
+                Documentación cargada correctamente.
+              </p>
+              <FileInputBlock
+                label="Imagen Frontal del Documento"
+                type="frontal"
+                existingUrl={documentUrls.frontal}
+                onDelete={() => handleDelete("frontal")}
+                isLoading={loading}
+              />
+              <FileInputBlock
+                label="Imagen del Dorso del Documento"
+                type="dorso"
+                existingUrl={documentUrls.dorso}
+                onDelete={() => handleDelete("dorso")}
+                isLoading={loading}
+              />
+              <FileInputBlock
+                label="Foto Real del Profesional"
+                type="real"
+                existingUrl={documentUrls.real}
+                onDelete={() => handleDelete("real")}
+                isLoading={loading}
+              />
+            </div>
+          ) : (
+            <DocumentoUploader
+              estado={estadoDocumento}
+              handleFileChange={handleFileChange}
+              loading={loading}
+            />
+          )}
+        </>
+      ) : (
+        <Flex className="h-[400px] justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-[#0058A2]" />
+        </Flex>
+      )}
+    </Card>
   );
 }

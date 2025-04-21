@@ -29,9 +29,9 @@ export function LocationPicker({ onLocationSelect }: LocationPickerProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
   const [location, setLocation] = useState<{ lat: number; lng: number }>({
-    lat: -12.046374,
-    lng: -77.042793,
-  }) // Lima, Perú
+    lat: -25.2637399,
+    lng: -57.575926,
+  }) // Asunción, Paraguay
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
@@ -127,7 +127,7 @@ export function LocationPicker({ onLocationSelect }: LocationPickerProps) {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar ubicación (ej: Miraflores, Lima)"
+                placeholder="Buscar ubicación (ej: Asunción, Paraguay)"
                 className="flex-1"
                 disabled={isSearching}
               />
